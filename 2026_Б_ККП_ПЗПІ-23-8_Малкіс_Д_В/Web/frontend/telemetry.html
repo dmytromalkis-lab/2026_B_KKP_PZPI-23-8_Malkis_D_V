@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Телеметрія</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f5f5;height:100vh;overflow:hidden}
+.dashboard{display:flex;height:100vh}
+
+.sidebar{width:250px;background:linear-gradient(180deg,#2c3e50 0%,#1a252f 100%);color:#fff;display:flex;flex-direction:column;box-shadow:2px 0 10px rgba(0,0,0,0.1);z-index:1000}
+.sidebar-header{padding:25px 20px;font-size:20px;font-weight:bold;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.1)}
+.sidebar-nav ul{list-style:none;padding:15px 0;flex:1}
+.sidebar-nav li{margin:5px 0}
+.sidebar-nav li a{color:#bdc3c7;text-decoration:none;display:block;padding:12px 20px;transition:all 0.3s;border-left:3px solid transparent}
+.sidebar-nav li a:hover{background:rgba(255,255,255,0.05);color:white;border-left:3px solid #3498db}
+.sidebar-nav li.active a{background:rgba(52,152,219,0.1);color:white;border-left:3px solid #3498db}
+
+.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.header{display:flex;justify-content:space-between;align-items:center;padding:15px 25px;background:white;box-shadow:0 2px 10px rgba(0,0,0,0.05);z-index:1000}
+.header h1{color:#2c3e50;font-size:24px}
+.user-info{display:flex;align-items:center;gap:15px}
+.logout-btn{padding:8px 16px;background:#e74c3c;color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;transition:background 0.3s}
+.logout-btn:hover{background:#c0392b}
+
+.content-wrapper{display:flex;flex:1;overflow:hidden}
+.controls-panel{width:350px;background:white;border-right:1px solid #eee;display:flex;flex-direction:column;overflow-y:auto;padding:20px;box-shadow:2px 0 5px rgba(0,0,0,0.05)}
+.map-container{flex:1;position:relative;overflow:hidden}
+#map{width:100%;height:100%}
+
+.control-group{margin-bottom:20px}
+.control-group label{display:block;font-size:13px;color:#7f8c8d;font-weight:500;margin-bottom:6px}
+.control-group select,
+.control-group input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;transition:all 0.3s}
+.control-group select:focus,
+.control-group input:focus{outline:none;border-color:#3498db;box-shadow:0 0 0 2px rgba(52,152,219,0.2)}
+.control-group input[readonly]{background:#f8f9fa;color:#6c757d}
+
+.buttons-container{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.action-btn{padding:12px;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.3s;width:100%}
+.btn-primary{background:#3498db;color:white}
+.btn-primary:hover{background:#2980b9}
+.btn-primary:disabled{background:#bdc3c7;cursor:not-allowed}
+.btn-warning{background:#f39c12;color:white}
+.btn-warning:hover{background:#d68910}
+.btn-warning:disabled{background:#f7dc6f;cursor:not-allowed}
+.btn-success{background:#27ae60;color:white}
+.btn-success:hover{background:#229954}
+.btn-success:disabled{background:#a3e4b9;cursor:not-allowed}
+.btn-danger{background:#e74c3c;color:white}
+.btn-danger:hover{background:#c0392b}
+.btn-danger:disabled{background:#f1948a;cursor:not-allowed}
+
+.stats-container{background:#f8f9fa;padding:15px;border-radius:8px;margin-top:20px;border:1px solid #eee}
+.stat-row{display:flex;justify-content:space-between;margin-bottom:10px}
+.stat-label{font-size:13px;color:#7f8c8d}
+.stat-value{font-size:14px;font-weight:bold;color:#2c3e50}
+.fuel-bar{height:10px;background:#ecf0f1;border-radius:5px;overflow:hidden;margin-top:5px}
+.fuel-fill{height:100%;background:linear-gradient(90deg,#27ae60,#2ecc71);transition:width 0.5s;width:100%}
+
+.status-indicator{display:flex;align-items:center;gap:10px;padding:12px;background:#f8f9fa;border-radius:6px;margin-top:20px;border:1px solid #eee}
+.status-dot{width:12px;height:12px;border-radius:50%;background:#95a5a6}
+.status-dot.active{background:#27ae60;animation:pulse 2s infinite}
+.status-dot.paused{background:#f39c12}
+.status-text{font-size:14px;color:#2c3e50;font-weight:500}
+
+.error-message,.success-message,.fuel-warning{position:fixed;top:20px;right:20px;padding:15px 20px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.3);z-index:1001;display:none;animation:slideIn 0.3s;max-width:400px}
+.error-message{background:#e74c3c;color:white}
+.success-message{background:#27ae60;color:white}
+.fuel-warning{background:#f39c12;color:white;top:80px}
+
+.loading-indicator {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    text-align: center;
+}
+
+@keyframes pulse{0%{opacity:1}50%{opacity:0.5}100%{opacity:1}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="sidebar">
+        <div class="sidebar-header">Fleet Management</div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="dashboard.html">Головна</a></li>
+                <li><a href="vehicles.html">Транспортні засоби</a></li>
+                <li><a href="drivers.html">Водії</a></li>
+                <li class="active"><a href="telemetry.html">Телеметрія</a></li>
+                <li><a href="route.html">Маршрути</a></li>
+                <li><a href="reports.html">Звіти</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Моніторинг телеметрії в реальному часі</h1>
+            <div class="user-info">
+                <span id="userName">Користувач</span>
+                <button class="logout-btn" onclick="logout()">Вийти</button>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <label for="routeSelect">Оберіть маршрут:</label>
+                    <select id="routeSelect" onchange="onRouteSelect()">
+                        <option value="">Завантаження маршрутів...</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="vehicleInfo">Транспортний засіб:</label>
+                    <input type="text" id="vehicleInfo" readonly placeholder="Буде обрано з маршруту">
+                </div>
+                <div class="control-group">
+                    <label for="routeInfo">Маршрут:</label>
+                    <input type="text" id="routeInfo" readonly placeholder="Початкова → Кінцева точка">
+                </div>
+                <div class="control-group">
+                    <label for="plannedStart">Запланований початок:</label>
+                    <input type="text" id="plannedStart" readonly placeholder="--:--:--">
+                </div>
+                <div class="control-group">
+                    <label for="plannedEnd">Заплановане завершення:</label>
+                    <input type="text" id="plannedEnd" readonly placeholder="--:--:--">
+                </div>
+                <div class="control-group">
+                    <label for="fuelLevel">Рівень палива:</label>
+                    <input type="text" id="fuelLevel" value="100%" readonly>
+                    <div class="fuel-bar"><div id="fuelFill" class="fuel-fill" style="width:100%"></div></div>
+                </div>
+                <div class="buttons-container">
+                    <button id="startBtn" class="action-btn btn-primary" onclick="startTrip()">Почати поїздку</button>
+                    <button id="pauseBtn" class="action-btn btn-warning" onclick="pauseTrip()" disabled>Пауза</button>
+                    <button id="resumeBtn" class="action-btn btn-success" onclick="resumeTrip()" disabled>Продовжити</button>
+                    <button id="endBtn" class="action-btn btn-danger" onclick="endTrip()" disabled>Завершити</button>
+                </div>
+                <div class="stats-container">
+                    <div class="stat-row">
+                        <span class="stat-label">Тривалість:</span>
+                        <span class="stat-value" id="duration">00:00:00</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Відстань:</span>
+                        <span class="stat-value" id="distance">0 км</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Швидкість:</span>
+                        <span class="stat-value" id="speed">0 км/год</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Статус:</span>
+                        <span class="stat-value" id="statusText">Неактивно</span>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot"></div>
+                    <div id="currentStatus" class="status-text">Очікування початку...</div>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="loading-indicator" id="mapLoading">
+                    <i class="fas fa-spinner fa-spin"></i> Завантаження маршруту...
+                </div>
+                <div class="search-controls" style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)">
+                    <input type="text" id="searchInput" placeholder="Пошук місця..." style="padding: 5px; margin-right: 5px;">
+                    <button onclick="searchLocation()" style="padding: 5px 10px;">Пошук</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="errorMessage" class="error-message"></div>
+<div id="successMessage" class="success-message"></div>
+<div id="fuelWarning" class="fuel-warning">⚠️ Увага! Рівень палива низький!</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
+
+<script>
+const SERVER_URL = 'http://localhost:4001';
+let map, routingControl;
+let selectedRoute = null;
+let routePoints = [];
+let geocoder = null;
+
+const routeSelect = document.getElementById('routeSelect');
+const vehicleInfo = document.getElementById('vehicleInfo');
+const routeInfo = document.getElementById('routeInfo');
+const plannedStart = document.getElementById('plannedStart');
+const plannedEnd = document.getElementById('plannedEnd');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resumeBtn = document.getElementById('resumeBtn');
+const endBtn = document.getElementById('endBtn');
+const statusTextEl = document.getElementById('statusText');
+const statusDot = document.getElementById('statusDot');
+const mapLoading = document.getElementById('mapLoading');
+
+document.addEventListener('DOMContentLoaded', () => {
+    const userData = localStorage.getItem('user');
+    const userId = localStorage.getItem('userId');
+    
+    console.log('User data:', userData);
+    console.log('User ID:', userId);
+    
+    if (!userData || !userId) {
+        console.log('Користувача не знайдено, перенаправлення на login.html');
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    try {
+        const user = JSON.parse(userData);
+        document.getElementById('userName').textContent = user.name || 'Користувач';
+        console.log('Вітаємо,', user.name);
+    } catch (e) {
+        console.error('Помилка парсингу userData:', e);
+        document.getElementById('userName').textContent = 'Користувач';
+    }
+    
+    initMap();
+    loadRoutes();
+});
+
+function initMap() {
+    map = L.map('map').setView([50.4501, 30.5234], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    geocoder = L.Control.Geocoder.nominatim();
+
+    routingControl = L.Routing.control({
+        waypoints: [],
+        routeWhileDragging: false,
+        showAlternatives: false,
+        fitSelectedRoutes: true,
+        show: false,
+        createMarker: function() { return null; },
+        lineOptions: {
+            styles: [{color: '#3498db', weight: 5, opacity: 0.7}],
+            extendToWaypoints: true,
+            missingRouteTolerance: 0
+        }
+    }).addTo(map);
+}
+
+async function loadRoutes() {
+    try {
+        console.log('Запит маршрутів для випадаючого списку...');
+        const res = await fetch(`${SERVER_URL}/api/routes`);
+        
+        console.log('Статус відповіді:', res.status, res.statusText);
+        
+        if(!res.ok) {
+            console.error('Помилка запиту:', await res.text());
+            throw new Error(`Не вдалося завантажити маршрути: ${res.status} ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        console.log('Отримані дані маршрутів:', data);
+
+        routeSelect.innerHTML = '<option value="">Оберіть маршрут...</option>';
+        
+        let routesArray = [];
+        if (data.success && data.data && Array.isArray(data.data)) {
+            routesArray = data.data;
+        } else if (data.success && Array.isArray(data.routes)) {
+            routesArray = data.routes;
+        } else if (Array.isArray(data)) {
+            routesArray = data;
+        } else if (data.data && Array.isArray(data.data)) {
+            routesArray = data.data;
+        }
+        
+        if (routesArray.length > 0) {
+            console.log(`Знайдено ${routesArray.length} маршрутів`);
+            
+            routesArray.forEach(r => {
+                const option = document.createElement('option');
+                option.value = r.route_id;
+                option.textContent = `${r.start_point} → ${r.end_point} (${r.plate_number || '—'})`;
+                routeSelect.appendChild(option);
+            });
+        } else {
+            console.log('Маршрутів не знайдено або порожня відповідь');
+            routeSelect.innerHTML = '<option value="">Маршрутів не знайдено</option>';
+            showError('Маршрутів для вибору не знайдено');
+        }
+    } catch(err) { 
+        console.error('Помилка завантаження маршрутів:', err);
+        showError(err.message); 
+    }
+}
+
+async function onRouteSelect() {
+    const routeId = routeSelect.value;
+    if(!routeId) return;
+
+    try {
+        console.log('Запит деталей маршруту ID:', routeId);
+        showLoading(true);
+        
+        const res = await fetch(`${SERVER_URL}/api/routes/${routeId}`);
+        
+        if(!res.ok) {
+            throw new Error('Не вдалося завантажити маршрут');
+        }
+        
+        const data = await res.json();
+        console.log('Дані маршруту:', data);
+
+        selectedRoute = data.data || data;
+        vehicleInfo.value = selectedRoute.plate_number || 'Невідомо';
+        routeInfo.value = `${selectedRoute.start_point} → ${selectedRoute.end_point}`;
+        plannedStart.value = selectedRoute.planned_start ? new Date(selectedRoute.planned_start).toLocaleString() : '--:--:--';
+        plannedEnd.value = selectedRoute.planned_end ? new Date(selectedRoute.planned_end).toLocaleString() : '--:--:--';
+
+        await geocodeAndDisplayRoute(selectedRoute.start_point, selectedRoute.end_point);
+
+    } catch(err){ 
+        console.error('Помилка завантаження маршруту:', err);
+        showError(err.message); 
+        showLoading(false);
+    }
+}
+
+async function geocodeAndDisplayRoute(startAddress, endAddress) {
+    try {
+        console.log('Геокодування початкової точки:', startAddress);
+        console.log('Геокодування кінцевої точки:', endAddress);
+        
+        const [startResult, endResult] = await Promise.all([
+            geocodeAddress(startAddress),
+            geocodeAddress(endAddress)
+        ]);
+
+        if (!startResult || !endResult) {
+            throw new Error('Не вдалося отримати координати для маршруту');
+        }
+
+        console.log('Координати початку:', startResult);
+        console.log('Координати кінця:', endResult);
+
+        clearMap();
+
+        const startMarker = L.marker(startResult).addTo(map)
+            .bindPopup(`<b>Початкова точка:</b><br>${startAddress}`)
+            .openPopup();
+        
+        const endMarker = L.marker(endResult).addTo(map)
+            .bindPopup(`<b>Кінцева точка:</b><br>${endAddress}`);
+
+        routePoints = [startResult, endResult];
+        
+        routingControl.setWaypoints(routePoints);
+        
+        const bounds = L.latLngBounds(routePoints);
+        map.fitBounds(bounds, {padding: [50, 50]});
+        
+        routingControl.on('routesfound', function(e) {
+            const routes = e.routes;
+            if (routes && routes.length > 0) {
+                const distance = (routes[0].summary.totalDistance / 1000).toFixed(1);
+                document.getElementById('distance').textContent = `${distance} км`;
+                console.log('Знайдено маршрут:', routes[0]);
+            }
+        });
+        
+        routingControl.on('routingerror', function(e) {
+            console.error('Помилка побудови маршруту:', e.error);
+            showError('Не вдалося побудувати маршрут між точками');
+        });
+
+        showSuccess('Маршрут побудовано успішно!');
+        
+    } catch (error) {
+        console.error('Помилка геокодування:', error);
+        showError('Не вдалося побудувати маршрут: ' + error.message);
+        
+        clearMap();
+        L.marker([50.4501, 30.5234]).addTo(map)
+            .bindPopup('Не вдалося отримати координати маршруту. Перевірте правильність адрес.')
+            .openPopup();
+    } finally {
+        showLoading(false);
+    }
+}
+
+function geocodeAddress(address) {
+    return new Promise((resolve, reject) => {
+        geocoder.geocode(address, (results) => {
+            if (results && results.length > 0) {
+                const location = results[0].center;
+                resolve(location);
+            } else {
+                reject(new Error(`Не вдалося знайти координати для: ${address}`));
+            }
+        });
+    });
+}
+
+function clearMap() {
+    map.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+        }
+    });
+    
+    routingControl.setWaypoints([]);
+}
+
+function showLoading(show) {
+    if (mapLoading) {
+        mapLoading.style.display = show ? 'block' : 'none';
+    }
+}
+
+function startTrip(){ 
+    if(!selectedRoute){ showError('Оберіть маршрут!'); return; }
+    startBtn.disabled=true; pauseBtn.disabled=false; endBtn.disabled=false;
+    statusTextEl.textContent='Поїздка активна'; statusDot.classList.add('active');
+    showSuccess('Поїздка розпочата!');
+}
+
+function pauseTrip(){ 
+    statusTextEl.textContent='Пауза'; statusDot.classList.remove('active'); statusDot.classList.add('paused');
+    pauseBtn.disabled=true; resumeBtn.disabled=false;
+    showSuccess('Поїздка призупинена');
+}
+
+function resumeTrip(){ 
+    statusTextEl.textContent='Поїздка активна'; statusDot.classList.remove('paused'); statusDot.classList.add('active');
+    pauseBtn.disabled=false; resumeBtn.disabled=true;
+    showSuccess('Поїздка відновлена');
+}
+
+function endTrip(){ 
+    startBtn.disabled=false; pauseBtn.disabled=true; resumeBtn.disabled=true; endBtn.disabled=true;
+    statusTextEl.textContent='Поїздка завершена'; statusDot.classList.remove('active','paused');
+    showSuccess('Поїздка завершена!');
+}
+
+function searchLocation(){
+    const query = document.getElementById('searchInput').value.trim();
+    if(!query) {
+        showError('Введіть текст для пошуку');
+        return;
+    }
+    
+    geocoder.geocode(query, (results) => {
+        if(results && results.length > 0){
+            const location = results[0].center;
+            map.setView(location, 15);
+            L.marker(location).addTo(map)
+                .bindPopup(`<b>${query}</b><br>${results[0].name || ''}`)
+                .openPopup();
+            showSuccess('Місце знайдено!');
+        } else {
+            showError('Місце не знайдено!');
+        }
+    });
+}
+
+function showError(msg){ 
+    const el = document.getElementById('errorMessage'); 
+    el.textContent = msg; 
+    el.style.display = 'block'; 
+    setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function showSuccess(msg){ 
+    const el = document.getElementById('successMessage'); 
+    el.textContent = msg; 
+    el.style.display = 'block'; 
+    setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function logout(){ 
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userId');
+    window.location.href='login.html'; 
+}
+</script>
+</body>
+</html>
