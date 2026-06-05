@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Транспортні засоби - Fleet Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 25px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 15px 0;
+            flex: 1;
+        }
+        
+        .sidebar-nav li {
+            margin: 5px 0;
+        }
+        
+        .sidebar-nav li a {
+            color: #bdc3c7;
+            text-decoration: none;
+            display: block;
+            padding: 12px 20px;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-nav li a:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+        
+        .sidebar-nav li.active a {
+            background: rgba(52,152,219,0.1);
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+            position: sticky;
+            top: 0;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info span {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        
+        .content-area {
+            padding: 20px;
+            flex: 1;
+        }
+        
+        .vehicles-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 5px;
+        }
+        
+        .vehicles-header h2 {
+            color: #2c3e50;
+            font-size: 20px;
+        }
+        
+        .add-vehicle-btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .add-vehicle-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .add-vehicle-btn::before {
+            content: '+';
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .error-message, .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1001;
+            display: none;
+            animation: slideIn 0.3s;
+            max-width: 400px;
+        }
+        
+        .error-message {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .success-message {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .search-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        
+        .search-btn {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .search-btn:hover {
+            background: #2980b9;
+        }
+        
+        .search-btn::before {
+            content: '🔍';
+        }
+        
+        .filters select {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 150px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filters select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        
+        .vehicles-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .vehicles-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .vehicles-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .vehicles-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .vehicles-table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s;
+        }
+        
+        .vehicles-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .vehicles-table td {
+            padding: 15px;
+            color: #495057;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        
+        .type-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge.assigned {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-badge.unassigned {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .driver-card {
+            background: #f0f8ff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border-left: 3px solid #2ecc71;
+            font-size: 12px;
+        }
+        .driver-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+        .driver-details {
+            font-size: 10px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        .assign-btn {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .assign-btn:hover {
+            background: #27ae60;
+        }
+        
+        .unassign-btn {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .unassign-btn:hover {
+            background: #d68910;
+        }
+        
+        .edit-btn {
+            background: #3498db;
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background: #2980b9;
+        }
+        
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .pagination button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .pagination button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #pageInfo {
+            font-size: 14px;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            color: #2c3e50;
+            font-size: 20px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #7f8c8d;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .cancel-btn {
+            padding: 10px 20px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .cancel-btn:hover {
+            background: #7f8c8d;
+        }
+        
+        button[type="submit"] {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        button[type="submit"]:hover {
+            background: #2980b9;
+        }
+        
+        button[type="submit"]:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state button {
+            margin-top: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header h2 {
+                font-size: 0;
+            }
+            
+            .sidebar-header h2::after {
+                content: 'FM';
+                font-size: 16px;
+            }
+            
+            .sidebar-nav li a span {
+                display: none;
+            }
+            
+            .sidebar-nav li a {
+                text-align: center;
+                padding: 15px 0;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                position: relative;
+            }
+            
+            .sidebar-nav li a:hover::after,
+            .sidebar-nav li.active a::after {
+                content: attr(data-title);
+                position: absolute;
+                left: 100%;
+                top: 50%;
+                transform: translateY(-50%);
+                background: #2c3e50;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                white-space: nowrap;
+                margin-left: 10px;
+                z-index: 1001;
+            }
+            
+            .sidebar-nav li a:hover,
+            .sidebar-nav li.active a {
+                border-left: none;
+                border-bottom: 3px solid #3498db;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .search-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .search-btn {
+                justify-content: center;
+            }
+            
+            .vehicles-table {
+                font-size: 12px;
+            }
+            
+            .vehicles-table th,
+            .vehicles-table td {
+                padding: 10px 5px;
+            }
+            
+            .action-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .action-btn {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .vehicles-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .add-vehicle-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .pagination button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Fleet Management</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html" data-title="Головна">Головна</a></li>
+                    <li class="active"><a href="vehicles.html" data-title="Транспорт">Транспортні засоби</a></li>
+                    <li><a href="drivers.html" data-title="Водії">Водії</a></li>
+                    <li><a href="route.html" data-title="Маршрути">Маршрути</a></li>
+                    <li><a href="telemetry.html" data-title="Телеметрія">Телеметрія</a></li>
+                    <li><a href="reports.html" data-title="Звіти">Звіти</a></li>
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h1>Транспортні засоби</h1>
+                <div class="user-info">
+                    <span id="userName">Користувач</span>
+                    <button class="logout-btn" onclick="logout()">Вийти</button>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="vehicles-header">
+                    <h2>Список транспортних засобів</h2>
+                    <button class="add-vehicle-btn" onclick="showAddModal()">Додати транспорт</button>
+                </div>
+                
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+                
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Пошук за номером, моделлю або типом..." 
+                               onkeyup="handleSearch()">
+                        <button onclick="handleSearch()" class="search-btn">Пошук</button>
+                    </div>
+                    <div class="filters">
+                        <select id="typeFilter" onchange="handleSearch()">
+                            <option value="">Всі типи</option>
+                            <option value="легковий">Легковий</option>
+                            <option value="вантажний">Вантажний</option>
+                            <option value="автобус">Автобус</option>
+                            <option value="спецтехніка">Спецтехніка</option>
+                            <option value="мотоцикл">Мотоцикл</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="vehicles-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Номерний знак</th>
+                                <th>Тип</th>
+                                <th>Модель</th>
+                                <th>Рік</th>
+                                <th>Водій</th>
+                                <th>Статус</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehiclesTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 40px;">
+                                    <div class="loading-spinner"></div>
+                                    <div style="margin-top: 10px; color: #7f8c8d;">Завантаження даних...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button id="prevBtn" onclick="changePage(-1)" disabled>← Попередня</button>
+                    <span id="pageInfo">Сторінка 1 з 1</span>
+                    <button id="nextBtn" onclick="changePage(1)" disabled>Наступна →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="vehicleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Додати транспорт</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="vehicleForm">
+                    <input type="hidden" id="vehicleId">
+                    
+                    <div class="form-group">
+                        <label for="plate_number">Номерний знак:</label>
+                        <input type="text" id="plate_number" name="plate_number" required 
+                               placeholder="AA1234BB" 
+                               pattern="[A-Za-z0-9]+"
+                               title="Тільки латинські літери та цифри">
+                        <small style="color: #7f8c8d; font-size: 12px; margin-top: 5px; display: block;">
+                            Використовуйте тільки латинські літери A-Z та цифри 0-9
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="type">Тип:</label>
+                        <select id="type" name="type" required>
+                            <option value="">Оберіть тип</option>
+                            <option value="легковий">Легковий</option>
+                            <option value="вантажний">Вантажний</option>
+                            <option value="автобус">Автобус</option>
+                            <option value="спецтехніка">Спецтехніка</option>
+                            <option value="мотоцикл">Мотоцикл</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="model">Модель:</label>
+                        <input type="text" id="model" name="model" required 
+                               placeholder="Наприклад: Toyota Camry">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="year">Рік випуску:</label>
+                        <input type="number" id="year" name="year" 
+                               min="1900" max="2025" 
+                               value="2020" required>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="button" class="cancel-btn" onclick="closeModal()">Скасувати</button>
+                        <button type="submit" id="modalSubmitBtn">Зберегти</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="assignDriverModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Призначити водія</h2>
+                <button class="close-btn" onclick="closeAssignModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="driverSelect">Оберіть водія:</label>
+                    <select id="driverSelect" class="form-control">
+                        <option value="">Завантаження водіїв...</option>
+                    </select>
+                </div>
+                <div id="currentDriverInfo" style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; display: none; border-left: 4px solid #3498db;">
+                    <strong style="color: #2c3e50;">Поточний водій:</strong> <span id="currentDriverName" style="color: #7f8c8d; margin-left: 5px;"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeAssignModal()">Скасувати</button>
+                <button type="button" class="btn-primary" onclick="assignSelectedDriver()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer;">Призначити</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentVehicleId = null;
+        let autoRefreshInterval = null;
+        let allVehicles = [];
+        let filteredVehicles = [];
+        let currentPage = 1;
+        let vehiclesPerPage = 10;
+        let currentVehicleToAssign = null;
+        let allDrivers = [];
+        let driversMap = {};
+        const SERVER_URL = 'http://localhost:4001';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const userData = localStorage.getItem('user');
+            const userId = localStorage.getItem('userId');
+            
+            if (!userData || !userId) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(userData);
+                document.getElementById('userName').textContent = user.name || 'Користувач';
+            } catch (e) {
+                document.getElementById('userName').textContent = 'Користувач';
+            }
+            
+            setupModalClose();
+            loadAllData();
+            startAutoRefresh();
+        });
+        
+        async function loadAllData() {
+            await Promise.all([
+                loadDrivers(),
+                loadVehicles()
+            ]);
+        }
+        
+        async function loadDrivers() {
+            try {
+                console.log('Завантаження списку водіїв...');
+                const response = await fetch(`${SERVER_URL}/api/drivers`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Відповідь водіїв:', data);
+                    
+                    let drivers = [];
+                    if (data.success && data.data) {
+                        drivers = data.data;
+                    } else if (data.success && data.drivers) {
+                        drivers = data.drivers;
+                    } else if (Array.isArray(data)) {
+                        drivers = data;
+                    }
+                    
+                    driversMap = {};
+                    drivers.forEach(driver => {
+                        driversMap[driver.driver_id] = driver;
+                    });
+                    
+                    console.log(`Завантажено ${drivers.length} водіїв`);
+                }
+            } catch (error) {
+                console.error('Помилка завантаження водіїв:', error);
+            }
+        }
+        
+        async function loadVehicles() {
+            try {
+                console.log('Завантаження списку транспорту...');
+                const response = await fetch(`${SERVER_URL}/api/vehicles`);
+                
+                if (!response.ok) {
+                    throw new Error(`Помилка сервера: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Дані від сервера:', data);
+                
+                if (data.success && data.data) {
+                    allVehicles = data.data;
+                } else if (data.success && data.vehicles) {
+                    allVehicles = data.vehicles;
+                } else if (Array.isArray(data)) {
+                    allVehicles = data;
+                } else {
+                    allVehicles = [];
+                }
+                
+                filteredVehicles = [...allVehicles];
+                console.log(`Завантажено ${allVehicles.length} транспортів`);
+                
+                renderVehiclesTable();
+                setupPagination();
+                
+            } catch (error) {
+                console.error('Помилка завантаження транспорту:', error);
+                showError('Помилка завантаження списку транспорту: ' + error.message);
+                
+                const tbody = document.getElementById('vehiclesTableBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <div style="font-size: 16px; margin-bottom: 10px; color: #e74c3c;">
+                                ❌ Не вдалося завантажити дані
+                            </div>
+                            <button onclick="loadVehicles()" class="add-vehicle-btn" 
+                                    style="margin-top: 10px; background-color: #3498db;">
+                                Спробувати знову
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        function getDriverInfo(driverId) {
+            if (!driverId) return null;
+            return driversMap[driverId] || null;
+        }
+        
+        function setupModalClose() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        if (this.id === 'vehicleModal') {
+                            closeModal();
+                        } else if (this.id === 'assignDriverModal') {
+                            closeAssignModal();
+                        }
+                    }
+                });
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    closeAssignModal();
+                }
+            });
+        }
+        
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('userId');
+            window.location.href = 'login.html';
+        }
+        
+        function renderVehiclesTable() {
+            const tbody = document.getElementById('vehiclesTableBody');
+            
+            if (!filteredVehicles || filteredVehicles.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px;">
+                            <div style="font-size: 18px; color: #7f8c8d; margin-bottom: 10px;">
+                                🚗 Не знайдено транспортних засобів
+                            </div>
+                            <button onclick="showAddModal()" class="add-vehicle-btn" style="margin-top: 10px;">
+                                Додати перший транспорт
+                            </button>
+                          </td>
+                      </tr>
+                `;
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+            
+            const startIndex = (currentPage - 1) * vehiclesPerPage;
+            const endIndex = startIndex + vehiclesPerPage;
+            const pageVehicles = filteredVehicles.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = '';
+            
+            pageVehicles.forEach(vehicle => {
+                const row = document.createElement('tr');
+                
+                const hasDriver = vehicle.driver_id;
+                const driverStatus = hasDriver ? 
+                    `<span class="status-badge assigned">З водієм</span>` : 
+                    `<span class="status-badge unassigned">Без водія</span>`;
+                
+                let driverHtml = '<span style="color: #95a5a6;">Не призначено</span>';
+                if (hasDriver) {
+                    const driver = getDriverInfo(vehicle.driver_id);
+                    if (driver) {
+                        driverHtml = `
+                            <div class="driver-card">
+                                <div class="driver-name">👨‍✈️ ${driver.name || 'Водій'}</div>
+                                <div class="driver-details">📞 ${driver.contact || '—'} | 🪪 ${driver.license_number || '—'}</div>
+                            </div>
+                        `;
+                    } else {
+                        driverHtml = `<div class="driver-card"><div class="driver-name">👨‍✈️ Водій #${vehicle.driver_id}</div><div class="driver-details">Завантаження...</div></div>`;
+                    }
+                }
+                
+                row.innerHTML = `
+                    <td>${vehicle.vehicle_id || 'N/A'}</td>
+                    <td>
+                        <div><strong>${vehicle.plate_number || 'Без номера'}</strong></div>
+                        <small style="color: #7f8c8d; font-size: 12px;">ID: ${vehicle.vehicle_id}</small>
+                      </div>
+                    </td>
+                    <td><span class="type-badge">${vehicle.type || 'Не вказано'}</span></td>
+                    <td>${vehicle.model || 'Не вказано'}</td>
+                    <td>${vehicle.year || 'Не вказано'}</td>
+                    <td>${driverHtml}</td>
+                    <td>${driverStatus}</td>
+                    <td>
+                        <div class="action-buttons">
+                            ${hasDriver ? 
+                                `<button class="action-btn unassign-btn" onclick="unassignDriver(${vehicle.driver_id})">Звільнити</button>` : 
+                                `<button class="action-btn assign-btn" onclick="showAssignModal(${vehicle.vehicle_id})">Призначити</button>`
+                            }
+                            <button class="action-btn edit-btn" onclick="editVehicle(${vehicle.vehicle_id})">Редагувати</button>
+                            <button class="action-btn delete-btn" onclick="deleteVehicle(${vehicle.vehicle_id})">Видалити</button>
+                        </div>
+                      </div>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            document.getElementById('pagination').style.display = 'flex';
+        }
+        
+        function setupPagination() {
+            const totalPages = Math.ceil(filteredVehicles.length / vehiclesPerPage);
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            pageInfo.textContent = `Сторінка ${currentPage} з ${totalPages || 1}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
+        
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredVehicles.length / vehiclesPerPage);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderVehiclesTable();
+                setupPagination();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+        
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            
+            filteredVehicles = allVehicles.filter(vehicle => {
+                const matchesSearch = !searchTerm || 
+                    (vehicle.plate_number && vehicle.plate_number.toLowerCase().includes(searchTerm)) ||
+                    (vehicle.model && vehicle.model.toLowerCase().includes(searchTerm)) ||
+                    (vehicle.type && vehicle.type.toLowerCase().includes(searchTerm));
+                
+                const matchesType = !typeFilter || vehicle.type === typeFilter;
+                
+                return matchesSearch && matchesType;
+            });
+            
+            currentPage = 1;
+            renderVehiclesTable();
+            setupPagination();
+        }
+        
+        function showAddModal() {
+            currentVehicleId = null;
+            document.getElementById('modalTitle').textContent = 'Додати транспорт';
+            document.getElementById('vehicleForm').reset();
+            document.getElementById('plate_number').focus();
+            document.getElementById('vehicleModal').style.display = 'flex';
+        }
+        
+        async function editVehicle(id) {
+            currentVehicleId = id;
+            document.getElementById('modalTitle').textContent = 'Редагувати транспорт';
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/vehicles/${id}`);
+                
+                if (!response.ok) {
+                    throw new Error('Не вдалося завантажити дані транспорту');
+                }
+                
+                const data = await response.json();
+                let vehicle = data.data || data.vehicle || data;
+                
+                if (vehicle) {
+                    document.getElementById('vehicleId').value = vehicle.vehicle_id;
+                    document.getElementById('plate_number').value = vehicle.plate_number || '';
+                    document.getElementById('type').value = vehicle.type || '';
+                    document.getElementById('model').value = vehicle.model || '';
+                    document.getElementById('year').value = vehicle.year || '';
+                    document.getElementById('vehicleModal').style.display = 'flex';
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('vehicleModal').style.display = 'none';
+            document.getElementById('vehicleForm').reset();
+            currentVehicleId = null;
+        }
+        
+        async function showAssignModal(vehicleId) {
+            currentVehicleToAssign = vehicleId;
+            
+            await loadDrivers();
+            
+            const driverSelect = document.getElementById('driverSelect');
+            const availableDrivers = Object.values(driversMap).filter(driver => !driver.vehicle_id);
+            
+            if (!availableDrivers || availableDrivers.length === 0) {
+                driverSelect.innerHTML = '<option value="">Немає доступних водіїв</option>';
+            } else {
+                driverSelect.innerHTML = '<option value="">Оберіть водія</option>';
+                availableDrivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.driver_id;
+                    option.textContent = `${driver.name || 'Без імені'} (${driver.license_number || 'немає прав'}) - Статус: ${driver.status || 'активний'}`;
+                    driverSelect.appendChild(option);
+                });
+            }
+            
+            const vehicle = allVehicles.find(v => v.vehicle_id == vehicleId);
+            if (vehicle && vehicle.driver_id) {
+                const currentDriver = driversMap[vehicle.driver_id];
+                if (currentDriver) {
+                    document.getElementById('currentDriverInfo').style.display = 'block';
+                    document.getElementById('currentDriverName').textContent = `${currentDriver.name || 'Водій'} (${currentDriver.license_number || 'немає прав'})`;
+                } else {
+                    document.getElementById('currentDriverInfo').style.display = 'none';
+                }
+            } else {
+                document.getElementById('currentDriverInfo').style.display = 'none';
+            }
+            
+            document.getElementById('assignDriverModal').style.display = 'flex';
+        }
+        
+        function closeAssignModal() {
+            document.getElementById('assignDriverModal').style.display = 'none';
+            currentVehicleToAssign = null;
+        }
+        
+        async function assignSelectedDriver() {
+            const driverId = document.getElementById('driverSelect').value;
+            
+            if (!driverId) {
+                showError('Оберіть водія для призначення');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/vehicles/assign-driver`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        vehicle_id: currentVehicleToAssign,
+                        driver_id: driverId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showSuccess('Водія успішно призначено');
+                    closeAssignModal();
+                    await loadAllData();
+                } else {
+                    throw new Error(data.message || 'Помилка призначення водія');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+        
+        async function unassignDriver(driverId) {
+            if (!confirm('Ви впевнені, що хочете звільнити водія?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/vehicles/unassign-driver`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ driver_id: driverId })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showSuccess('Водія успішно звільнено');
+                    await loadAllData();
+                } else {
+                    throw new Error(data.message || 'Помилка звільнення водія');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+        
+        document.getElementById('vehicleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let plate_number = document.getElementById('plate_number').value.trim();
+            const type = document.getElementById('type').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const year = document.getElementById('year').value;
+            
+            clearMessages();
+            
+            if (!plate_number) {
+                showError('Введіть номерний знак');
+                return;
+            }
+            
+            plate_number = plate_number.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            
+            if (!plate_number) {
+                showError('Номерний знак має містити тільки латинські літери та цифри');
+                return;
+            }
+            
+            if (!type) {
+                showError('Оберіть тип транспорту');
+                return;
+            }
+            
+            if (!model) {
+                showError('Введіть модель транспорту');
+                return;
+            }
+            
+            const currentYear = new Date().getFullYear();
+            if (!year || year < 1900 || year > currentYear + 1) {
+                showError(`Введіть коректний рік випуску (1900-${currentYear + 1})`);
+                return;
+            }
+            
+            const method = currentVehicleId ? 'PUT' : 'POST';
+            const url = currentVehicleId 
+                ? `${SERVER_URL}/api/vehicles/${currentVehicleId}`
+                : `${SERVER_URL}/api/vehicles`;
+            
+            try {
+                document.getElementById('modalSubmitBtn').disabled = true;
+                document.getElementById('modalSubmitBtn').textContent = 'Збереження...';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        plate_number, 
+                        type, 
+                        model, 
+                        year: parseInt(year) 
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Помилка збереження');
+                }
+                
+                closeModal();
+                showSuccess(currentVehicleId ? '✅ Транспорт оновлено успішно!' : '✅ Транспорт додано успішно!');
+                
+                setTimeout(() => {
+                    loadVehicles();
+                }, 500);
+                
+            } catch (error) {
+                console.error('Помилка збереження транспорту:', error);
+                showError('❌ ' + error.message);
+            } finally {
+                document.getElementById('modalSubmitBtn').disabled = false;
+                document.getElementById('modalSubmitBtn').textContent = 'Зберегти';
+            }
+        });
+        
+        async function deleteVehicle(id) {
+            if (!confirm('Ви впевнені, що хочете видалити цей транспортний засіб?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${SERVER_URL}/api/vehicles/${id}`, { method: 'DELETE' });
+                
+                if (!response.ok) {
+                    throw new Error('Помилка видалення');
+                }
+                
+                showSuccess('✅ Транспорт видалено успішно!');
+                loadVehicles();
+            } catch (error) {
+                showError('❌ ' + error.message);
+            }
+        }
+        
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            autoRefreshInterval = setInterval(() => {
+                console.log('Автоматичне оновлення...');
+                loadAllData();
+            }, 60000);
+            
+            window.addEventListener('beforeunload', () => {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                }
+            });
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.innerHTML = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.innerHTML = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => successDiv.style.display = 'none', 3000);
+        }
+        
+        function clearMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

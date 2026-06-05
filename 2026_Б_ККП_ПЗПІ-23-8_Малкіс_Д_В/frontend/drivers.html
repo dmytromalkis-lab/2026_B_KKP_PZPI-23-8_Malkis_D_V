@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Водії - Fleet Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 25px 15px;
+            font-size: 18px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar-header h2 {
+            margin: 0;
+            padding: 0;
+            font-size: inherit;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 15px 0;
+            flex: 1;
+        }
+        
+        .sidebar-nav li {
+            margin: 5px 0;
+        }
+        
+        .sidebar-nav li a {
+            color: #bdc3c7;
+            text-decoration: none;
+            display: block;
+            padding: 12px 20px;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-nav li a:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+        
+        .sidebar-nav li.active a {
+            background: rgba(52,152,219,0.1);
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+            position: sticky;
+            top: 0;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info span {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        
+        .content-area {
+            padding: 20px;
+            flex: 1;
+        }
+        
+        .vehicles-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 5px;
+        }
+        
+        .vehicles-header h2 {
+            color: #2c3e50;
+            font-size: 20px;
+        }
+        
+        .add-vehicle-btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .add-vehicle-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .add-vehicle-btn::before {
+            content: '+';
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .error-message, .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1001;
+            display: none;
+            animation: slideIn 0.3s;
+            max-width: 400px;
+        }
+        
+        .error-message {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .success-message {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .search-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        
+        .search-btn {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .search-btn:hover {
+            background: #2980b9;
+        }
+        
+        .search-btn::before {
+            content: '🔍';
+        }
+        
+        .filters select {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 150px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filters select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            display: block;
+            font-size: 13px;
+            color: #7f8c8d;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 28px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .vehicles-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .vehicles-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .vehicles-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .vehicles-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .vehicles-table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s;
+        }
+        
+        .vehicles-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .vehicles-table td {
+            padding: 15px;
+            color: #495057;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        
+        .driver-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active { 
+            background: #d4edda; 
+            color: #155724; 
+        }
+        
+        .status-inactive { 
+            background: #f8d7da; 
+            color: #721c24; 
+        }
+        
+        .status-vacation { 
+            background: #fff3cd; 
+            color: #856404; 
+        }
+        
+        .vehicle-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        .assign-btn {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .assign-btn:hover {
+            background: #27ae60;
+        }
+        
+        .unassign-btn {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .unassign-btn:hover {
+            background: #d68910;
+        }
+        
+        .edit-btn {
+            background: #3498db;
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background: #2980b9;
+        }
+        
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .pagination button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .pagination button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            color: #2c3e50;
+            font-size: 20px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #7f8c8d;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .vehicle-info {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+        
+        .table-search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .table-search-container input,
+        .table-search-container select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .table-search-container input:focus,
+        .table-search-container select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        
+        .table-search-container input {
+            flex: 1;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar-header h2 {
+                font-size: 0;
+            }
+            
+            .sidebar-header h2::after {
+                content: 'FM';
+                font-size: 16px;
+                font-weight: bold;
+                white-space: nowrap;
+            }
+            
+            .sidebar-nav li a span {
+                display: none;
+            }
+            
+            .sidebar-nav li a {
+                text-align: center;
+                padding: 15px 0;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                position: relative;
+            }
+            
+            .sidebar-nav li a::before {
+                display: block;
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+            
+            .sidebar-nav li:nth-child(1) a::before { content: '🏠'; }
+            .sidebar-nav li:nth-child(2) a::before { content: '🚗'; }
+            .sidebar-nav li:nth-child(3) a::before { content: '👤'; }
+            .sidebar-nav li:nth-child(4) a::before { content: '🗺️'; }
+            .sidebar-nav li:nth-child(5) a::before { content: '📡'; }
+            .sidebar-nav li:nth-child(6) a::before { content: '📊'; }
+            
+            .sidebar-nav li a:hover::after,
+            .sidebar-nav li.active a::after {
+                content: attr(data-title);
+                position: absolute;
+                left: 100%;
+                top: 50%;
+                transform: translateY(-50%);
+                background: #2c3e50;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                white-space: nowrap;
+                margin-left: 10px;
+                z-index: 1001;
+                box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            }
+            
+            .sidebar-nav li a:hover,
+            .sidebar-nav li.active a {
+                border-left: none;
+                border-bottom: 3px solid #3498db;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .table-search-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .table-search-container input,
+            .table-search-container select {
+                width: 100%;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .vehicles-table {
+                font-size: 12px;
+            }
+            
+            .vehicles-table th,
+            .vehicles-table td {
+                padding: 10px 5px;
+            }
+            
+            .action-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .action-btn {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .vehicles-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .add-vehicle-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10px;
+            }
+            
+            .form-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .empty-state p {
+            margin-bottom: 20px;
+        }
+        
+        .info-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .highlight {
+            background-color: #fffde7;
+            font-weight: 500;
+        }
+        
+        .vehicle-card {
+            background: #f0f8ff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border-left: 3px solid #3498db;
+            font-size: 12px;
+        }
+        .vehicle-plate {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 13px;
+        }
+        .vehicle-details {
+            font-size: 10px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="sidebar-header"><h2>Fleet Management</h2></div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html" data-title="Панель керування">Панель керування</a></li>
+                    <li><a href="vehicles.html" data-title="Транспорт">Транспортні засоби</a></li>
+                    <li class="active"><a href="drivers.html" data-title="Водії">Водії</a></li>
+                    <li><a href="route.html" data-title="Маршрути">Маршрути</a></li>
+                    <li><a href="telemetry.html" data-title="Телеметрія">Телеметрія</a></li>
+                    <li><a href="reports.html" data-title="Звіти">Звіти</a></li>
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h1>Водії</h1>
+                <div class="user-info">
+                    <span id="userName">Користувач</span>
+                    <button class="logout-btn" onclick="logout()">Вийти</button>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div class="vehicles-header">
+                    <h2>Список водіїв</h2>
+                    <button class="add-vehicle-btn" onclick="showAddDriverModal()">Додати водія</button>
+                </div>
+                
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+                
+                <div class="table-search-container">
+                    <input type="text" id="searchInput" placeholder="Пошук за ПІБ, телефоном або посвідченням..." 
+                           onkeyup="handleSearch()">
+                    <select id="statusFilter" onchange="handleSearch()">
+                        <option value="">Всі статуси</option>
+                        <option value="active">Активні</option>
+                        <option value="inactive">Неактивні</option>
+                        <option value="vacation">У відпустці</option>
+                    </select>
+                    <select id="vehicleFilter" onchange="handleSearch()">
+                        <option value="">Всі транспорти</option>
+                        <option value="assigned">З транспортом</option>
+                        <option value="unassigned">Без транспорту</option>
+                    </select>
+                </div>
+                
+                <div class="vehicles-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>ПІБ</th>
+                                <th>Контакт</th>
+                                <th>Посвідчення</th>
+                                <th>Статус</th>
+                                <th>Транспорт</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="driversTableBody">
+                            <tr>
+                                <td colspan="7" class="loading">
+                                    <div class="loading-spinner"></div>
+                                    <div>Завантаження даних...</div>
+                                  </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="driverModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="driverModalTitle">Додати водія</h2>
+                <button class="close-btn" onclick="closeDriverModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="driverForm">
+                    <input type="hidden" id="driverId">
+
+                    <div class="form-group">
+                        <label for="driverName">ПІБ:</label>
+                        <input type="text" id="driverName" name="driverName" required placeholder="Введіть повне ім'я">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="driverContact">Контактний телефон:</label>
+                        <input type="text" id="driverContact" name="driverContact" required placeholder="+380501234567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="driverLicense">Номер водійського посвідчення:</label>
+                        <input type="text" id="driverLicense" name="driverLicense" required placeholder="АВ123456">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="driverStatus">Статус:</label>
+                        <select id="driverStatus" name="driverStatus" required>
+                            <option value="active">Активний</option>
+                            <option value="inactive">Неактивний</option>
+                            <option value="vacation">Відпустка</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="driverVehicle">Призначений транспорт:</label>
+                        <select id="driverVehicle" name="driverVehicle">
+                            <option value="">Не призначено</option>
+                        </select>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="closeDriverModal()">Скасувати</button>
+                        <button type="submit" id="driverModalSubmitBtn" class="btn btn-primary">Зберегти</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDriverId = null;
+        let allDrivers = [];
+        let filteredDrivers = [];
+        let allVehicles = [];
+        let currentUser = null;
+        const SERVER_URL = 'http://localhost:4001';
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadCurrentUser();
+            await loadVehicles();
+            await loadDrivers();
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeDriverModal();
+            });
+            
+            document.getElementById('driverModal').addEventListener('click', function(e) {
+                if (e.target === this) closeDriverModal();
+            });
+            
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleSearch();
+            });
+        });
+        
+        async function loadCurrentUser() {
+            try {
+                const savedUser = localStorage.getItem('user');
+                const userId = localStorage.getItem('userId');
+                
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    document.getElementById('userName').textContent = currentUser.name || 'Користувач';
+                    return;
+                }
+                
+                if (userId) {
+                    const response = await fetch(`${SERVER_URL}/api/auth/me`, {
+                        headers: { 'user-id': userId }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        currentUser = data.user || data;
+                        document.getElementById('userName').textContent = currentUser.name || 'Користувач';
+                        localStorage.setItem('user', JSON.stringify(currentUser));
+                    } else {
+                        document.getElementById('userName').textContent = 'Користувач';
+                    }
+                } else {
+                    document.getElementById('userName').textContent = 'Користувач';
+                }
+            } catch (error) {
+                console.error('Помилка завантаження користувача:', error);
+                document.getElementById('userName').textContent = 'Користувач';
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+        
+        async function loadVehicles() {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/vehicles`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        allVehicles = data.data;
+                    } else if (Array.isArray(data)) {
+                        allVehicles = data;
+                    }
+                }
+            } catch (error) {
+                console.error('Помилка завантаження транспортів:', error);
+            }
+        }
+        
+        function getVehicleById(vehicleId) {
+            return allVehicles.find(v => v.vehicle_id == vehicleId);
+        }
+        
+        async function loadDrivers() {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/drivers`);
+                
+                if (!response.ok) {
+                    throw new Error(`Помилка сервера: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    allDrivers = data.data;
+                } else if (Array.isArray(data)) {
+                    allDrivers = data;
+                } else {
+                    allDrivers = [];
+                }
+                
+                filteredDrivers = [...allDrivers];
+                renderDriversTable();
+                
+            } catch(err) { 
+                console.error('Помилка:', err);
+                showError('Помилка завантаження водіїв: ' + err.message);
+                document.getElementById('driversTableBody').innerHTML = `
+                    <tr><td colspan="7" style="text-align: center; padding: 40px;">
+                        ❌ Не вдалося завантажити дані<br>
+                        <button onclick="loadDrivers()" style="margin-top: 10px; padding: 5px 10px;">Спробувати знову</button>
+                    </td>
+                `;
+            }
+        }
+        
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const vehicleFilter = document.getElementById('vehicleFilter').value;
+            
+            filteredDrivers = allDrivers.filter(driver => {
+                const matchesSearch = !searchTerm || 
+                    (driver.name && driver.name.toLowerCase().includes(searchTerm)) ||
+                    (driver.contact && driver.contact.includes(searchTerm)) ||
+                    (driver.license_number && driver.license_number.toLowerCase().includes(searchTerm));
+                const matchesStatus = !statusFilter || driver.status === statusFilter;
+                const matchesVehicle = !vehicleFilter || 
+                    (vehicleFilter === 'assigned' && driver.vehicle_id) ||
+                    (vehicleFilter === 'unassigned' && !driver.vehicle_id);
+                return matchesSearch && matchesStatus && matchesVehicle;
+            });
+            renderDriversTable();
+        }
+        
+        function renderDriversTable() {
+            const tbody = document.getElementById('driversTableBody');
+            
+            if (!filteredDrivers || filteredDrivers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px;">👤 Не знайдено водіїв</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            filteredDrivers.forEach(driver => {
+                let statusClass = 'status-active';
+                let statusText = 'Активний';
+                
+                if (driver.status === 'inactive') {
+                    statusClass = 'status-inactive';
+                    statusText = 'Неактивний';
+                } else if (driver.status === 'vacation') {
+                    statusClass = 'status-vacation';
+                    statusText = 'У відпустці';
+                }
+                
+                let vehicleHtml = '<span style="color: #95a5a6;">Не призначено</span>';
+                if (driver.vehicle_id) {
+                    const vehicle = getVehicleById(driver.vehicle_id);
+                    if (vehicle) {
+                        vehicleHtml = `
+                            <div class="vehicle-card">
+                                <div class="vehicle-plate">🚗 ${vehicle.plate_number || 'Без номера'}</div>
+                                <div class="vehicle-details">${vehicle.model || '—'} (${vehicle.year || '—'})</div>
+                            </div>
+                        `;
+                    } else {
+                        vehicleHtml = `<div class="vehicle-card"><div class="vehicle-plate">🚗 Транспорт #${driver.vehicle_id}</div></div>`;
+                    }
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${driver.driver_id}</td>
+                    <td><strong>${driver.name || '—'}</strong></td>
+                    <td>${driver.contact || '—'}</td>
+                    <td>${driver.license_number || '—'}</td>
+                    <td><span class="driver-status ${statusClass}">${statusText}</span></td>
+                    <td>${vehicleHtml}</td>
+                    <td>
+                        <div class="action-buttons">
+                            ${driver.vehicle_id ? 
+                                `<button class="action-btn unassign-btn" onclick="unassignDriver(${driver.driver_id})">Звільнити</button>` : 
+                                `<button class="action-btn assign-btn" onclick="showAssignModal(${driver.driver_id})">Призначити</button>`
+                            }
+                            <button class="action-btn edit-btn" onclick="editDriver(${driver.driver_id})">Редагувати</button>
+                            <button class="action-btn delete-btn" onclick="deleteDriver(${driver.driver_id})">Видалити</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        async function loadVehiclesForSelect(currentVehicleId = null) {
+            try {
+                const select = document.getElementById('driverVehicle');
+                select.innerHTML = '<option value="">Не призначено</option>';
+                
+                allVehicles.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.vehicle_id;
+                    opt.textContent = `🚗 ${v.plate_number} - ${v.model} (${v.year})`;
+                    if (currentVehicleId && v.vehicle_id == currentVehicleId) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+            } catch(err) {
+                console.error('Error loading vehicles:', err);
+                showError('Не вдалося завантажити список транспортів');
+            }
+        }
+        
+        function showAddDriverModal() {
+            currentDriverId = null;
+            document.getElementById('driverModalTitle').textContent = 'Додати водія';
+            document.getElementById('driverForm').reset();
+            loadVehiclesForSelect();
+            document.getElementById('driverModal').style.display = 'flex';
+            document.getElementById('driverName').focus();
+        }
+        
+        async function editDriver(id) {
+            currentDriverId = id;
+            document.getElementById('driverModalTitle').textContent = 'Редагувати водія';
+            try {
+                const response = await fetch(`${SERVER_URL}/api/drivers/${id}`);
+                const data = await response.json();
+                let driver = data.data || data;
+                document.getElementById('driverId').value = driver.driver_id;
+                document.getElementById('driverName').value = driver.name || '';
+                document.getElementById('driverContact').value = driver.contact || '';
+                document.getElementById('driverLicense').value = driver.license_number || '';
+                document.getElementById('driverStatus').value = driver.status || 'active';
+                await loadVehiclesForSelect(driver.vehicle_id);
+                document.getElementById('driverModal').style.display = 'flex';
+            } catch(err) { 
+                showError('Помилка завантаження даних водія: ' + err.message);
+            }
+        }
+        
+        function closeDriverModal() {
+            document.getElementById('driverModal').style.display = 'none';
+            document.getElementById('driverForm').reset();
+            currentDriverId = null;
+        }
+        
+        async function showAssignModal(driverId) {
+            currentDriverId = driverId;
+            document.getElementById('driverModalTitle').textContent = 'Призначити транспорт водію';
+            try {
+                await loadVehiclesForSelect();
+                const response = await fetch(`${SERVER_URL}/api/drivers/${driverId}`);
+                const data = await response.json();
+                let driver = data.data || data;
+                document.getElementById('driverName').value = driver.name || '';
+                document.getElementById('driverContact').value = driver.contact || '';
+                document.getElementById('driverLicense').value = driver.license_number || '';
+                document.getElementById('driverStatus').value = driver.status || 'active';
+                document.getElementById('driverModal').style.display = 'flex';
+            } catch(err) { showError('Помилка: ' + err.message); }
+        }
+        
+        async function unassignDriver(driverId) {
+            if(!confirm('Ви впевнені, що хочете звільнити водія з транспорту?')) return;
+            try {
+                const response = await fetch(`${SERVER_URL}/api/vehicles/unassign-driver`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ driver_id: driverId })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showSuccess('✅ Водія успішно звільнено');
+                    await loadDrivers();
+                } else throw new Error(data.message || 'Помилка звільнення');
+            } catch(err) { showError('❌ ' + err.message); }
+        }
+        
+        document.getElementById('driverForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const driver_id = currentDriverId;
+            const name = document.getElementById('driverName').value.trim();
+            const contact = document.getElementById('driverContact').value.trim();
+            const license_number = document.getElementById('driverLicense').value.trim();
+            const status = document.getElementById('driverStatus').value;
+            const vehicle_id = document.getElementById('driverVehicle').value;
+            
+            if (!name || !contact || !license_number || !status) {
+                showError('Заповніть всі обов\'язкові поля');
+                return;
+            }
+            
+            const payload = { name, contact, license_number, status };
+            if (vehicle_id && vehicle_id !== '') payload.vehicle_id = parseInt(vehicle_id);
+            
+            const url = driver_id ? `${SERVER_URL}/api/drivers/${driver_id}` : `${SERVER_URL}/api/drivers`;
+            const method = driver_id ? 'PUT' : 'POST';
+            
+            try {
+                const submitBtn = document.getElementById('driverModalSubmitBtn');
+                submitBtn.disabled = true; submitBtn.textContent = 'Збереження...';
+                
+                const response = await fetch(url, {
+                    method: method, headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error('Помилка збереження');
+                
+                const responseData = await response.json();
+                const savedDriverId = driver_id || (responseData.data?.driver_id || responseData.driver_id);
+                
+                if (vehicle_id && vehicle_id !== '') {
+                    try {
+                        await fetch(`${SERVER_URL}/api/vehicles/assign-driver`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ vehicle_id: parseInt(vehicle_id), driver_id: savedDriverId })
+                        });
+                    } catch(assignError) { 
+                        console.warn('Помилка призначення:', assignError);
+                    }
+                }
+                
+                closeDriverModal();
+                await loadDrivers();
+                await loadVehicles();
+                showSuccess(driver_id ? '✅ Водія оновлено!' : '✅ Водія додано!');
+            } catch(err) { 
+                showError('❌ ' + err.message);
+            } finally {
+                const submitBtn = document.getElementById('driverModalSubmitBtn');
+                submitBtn.disabled = false; submitBtn.textContent = 'Зберегти';
+            }
+        });
+        
+        async function deleteDriver(id) {
+            if(!confirm('Ви впевнені, що хочете видалити цього водія?')) return;
+            try {
+                const response = await fetch(`${SERVER_URL}/api/drivers/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Помилка видалення');
+                await loadDrivers();
+                showSuccess('✅ Водія видалено!');
+            } catch(err) { showError('❌ ' + err.message); }
+        }
+        
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.innerHTML = msg; el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+        
+        function showSuccess(msg) {
+            const el = document.getElementById('successMessage');
+            el.innerHTML = msg; el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+    </script>
+</body>
+</html>
