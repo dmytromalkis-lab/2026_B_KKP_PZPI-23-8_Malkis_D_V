@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіти | Fleet Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow: hidden
+        }
+
+        .dashboard {
+            display: flex;
+            height: 100vh
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            font-size: 20px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 15px 0;
+            flex: 1;
+        }
+
+        .sidebar-nav li {
+            margin: 5px 0;
+        }
+
+        .sidebar-nav li a {
+            color: #bdc3c7;
+            text-decoration: none;
+            display: block;
+            padding: 12px 20px;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav li a:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+
+        .sidebar-nav li.active a {
+            background: rgba(52,152,219,0.1);
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #userName {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+            gap: 20px;
+            background: #f5f5f5;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            flex: 1;
+            overflow-y: auto;
+            align-content: start;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+
+        .report-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .report-header {
+            padding: 20px 20px 15px;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .report-header h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .report-content {
+            padding: 20px;
+        }
+
+        .stat-badge {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+
+        .stat-badge.success {
+            background: #27ae60;
+        }
+
+        .stat-badge.warning {
+            background: #f39c12;
+        }
+
+        .stat-badge.secondary {
+            background: #95a5a6;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52,152,219,0.3);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39,174,96,0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h2 {
+            color: #2c3e50;
+            font-size: 22px;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 28px;
+            color: #999;
+            transition: color 0.3s;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .form-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-apply {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-apply:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52,152,219,0.3);
+        }
+
+        .btn-cancel {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231,76,60,0.3);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .toast-success {
+            background: #27ae60;
+        }
+
+        .toast-error {
+            background: #e74c3c;
+        }
+
+        .toast-info {
+            background: #3498db;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .stats-summary {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .stats-summary .stat-badge {
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="sidebar-header">Fleet Management</div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard.html">Головна</a></li>
+                    <li><a href="vehicles.html">Транспорт</a></li>
+                    <li><a href="drivers.html">Водії</a></li>
+                    <li><a href="telemetry.html">Телеметрія</a></li>
+                    <li><a href="route.html">Маршрути</a></li>
+                    <li class="active"><a href="reports.html">Звіти</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>Звіти</h1>
+                <div class="user-info">
+                    <span id="userName">Користувач</span>
+                    <button class="logout-btn" onclick="logout()">Вийти</button>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="reports-grid" id="reportsGrid">
+                    <!-- Картки звітів будуть створені динамічно -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для фільтрів -->
+    <div class="modal" id="filterModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Фільтри звіту</h2>
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="filterContent">
+                <!-- Фільтри будуть вставлені динамічно -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:4001/api';
+        const userId = localStorage.getItem('userId');
+
+        if (!userId) {
+            alert('Спочатку увійдіть у систему');
+            window.location.href = 'login.html';
+        }
+
+        // Показуємо ім'я користувача
+        document.addEventListener('DOMContentLoaded', () => {
+            const userData = localStorage.getItem('user');
+            console.log('User data:', userData);
+            console.log('User ID:', userId);
+            
+            if (!userData || !userId) {
+                console.log('Користувача не знайдено, перенаправлення на login.html');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(userData);
+                document.getElementById('userName').textContent = user.name || 'Користувач';
+                console.log('Вітаємо,', user.name);
+            } catch (e) {
+                console.error('Помилка парсингу userData:', e);
+                document.getElementById('userName').textContent = 'Користувач';
+            }
+        });
+
+        let reportData = {
+            drivers: [],
+            vehicles: [],
+            routes: []
+        };
+
+        async function loadReportData() {
+            try {
+                showToast('Завантаження даних...', 'info');
+
+                const [driversRes, vehiclesRes, routesRes] = await Promise.all([
+                    fetch(`${API}/drivers`),
+                    fetch(`${API}/vehicles`),
+                    fetch(`${API}/routes`)
+                ]);
+
+                const driversData = await driversRes.json();
+                const vehiclesData = await vehiclesRes.json();
+                const routesData = await routesRes.json();
+
+                reportData.drivers = driversData.data || [];
+                reportData.vehicles = vehiclesData.data || [];
+                reportData.routes = routesData.data || [];
+
+                showToast(`Завантажено: ${reportData.drivers.length} водіїв, ${reportData.vehicles.length} ТЗ, ${reportData.routes.length} маршрутів`, 'success');
+                
+                renderReportCards();
+            } catch (error) {
+                console.error('Помилка завантаження даних:', error);
+                showToast('Помилка завантаження даних: ' + error.message, 'error');
+            }
+        }
+
+        function renderReportCards() {
+            const grid = document.getElementById('reportsGrid');
+            
+            const activeDrivers = reportData.drivers.filter(d => d.status === 'active').length;
+            const totalVehicles = reportData.vehicles.length;
+            const activeRoutes = reportData.routes.filter(r => r.status === 'active' || r.status === 'planned').length;
+            const completedRoutes = reportData.routes.filter(r => r.status === 'completed').length;
+
+            grid.innerHTML = `
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-users" style="color:#3498db;"></i> Водії</h3>
+                        <div class="stats-summary">
+                            <span class="stat-badge success">Активних: ${activeDrivers}</span>
+                            <span class="stat-badge secondary">Всього: ${reportData.drivers.length}</span>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <button class="btn btn-primary" onclick="generateReport('drivers')">
+                            <i class="fas fa-file-pdf"></i> PDF водіїв
+                        </button>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-truck" style="color:#27ae60;"></i> Транспорт</h3>
+                        <div class="stats-summary">
+                            <span class="stat-badge">Всього: ${totalVehicles}</span>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <button class="btn btn-primary" onclick="generateReport('vehicles')">
+                            <i class="fas fa-file-pdf"></i> PDF транспорту
+                        </button>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-route" style="color:#f39c12;"></i> Маршрути</h3>
+                        <div class="stats-summary">
+                            <span class="stat-badge success">Активні: ${activeRoutes}</span>
+                            <span class="stat-badge warning">Завершені: ${completedRoutes}</span>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <button class="btn btn-primary" onclick="generateReport('routes')">
+                            <i class="fas fa-file-pdf"></i> PDF маршрутів
+                        </button>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-header">
+                        <h3><i class="fas fa-file-alt" style="color:#8e44ad;"></i> Загальний звіт</h3>
+                        <div class="stats-summary">
+                            <span class="stat-badge secondary">${reportData.drivers.length} водіїв</span>
+                            <span class="stat-badge">${totalVehicles} ТЗ</span>
+                            <span class="stat-badge warning">${reportData.routes.length} маршрутів</span>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        <button class="btn btn-success" onclick="generateReport('general')">
+                            <i class="fas fa-file-pdf"></i> Повний звіт
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateReport(type) {
+            let filterHtml = '';
+            let title = '';
+
+            switch(type) {
+                case 'drivers':
+                    title = 'Звіт по водіях';
+                    filterHtml = `
+                        <div class="form-group">
+                            <label>Статус водія</label>
+                            <select id="filterStatus">
+                                <option value="">Всі</option>
+                                <option value="active">Активні</option>
+                                <option value="inactive">Неактивні</option>
+                                <option value="vacation">У відпустці</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+
+                case 'vehicles':
+                    title = 'Звіт по транспортних засобах';
+                    const years = [...new Set(reportData.vehicles.map(v => v.year))].sort();
+                    filterHtml = `
+                        <div class="form-group">
+                            <label>Рік випуску</label>
+                            <select id="filterYear">
+                                <option value="">Всі роки</option>
+                                ${years.map(y => `<option value="${y}">${y}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Тип транспорту</label>
+                            <select id="filterType">
+                                <option value="">Всі типи</option>
+                                ${[...new Set(reportData.vehicles.map(v => v.type))].map(t => `<option value="${t}">${t}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                    break;
+
+                case 'routes':
+                    title = 'Звіт по маршрутах';
+                    filterHtml = `
+                        <div class="form-group">
+                            <label>Статус маршруту</label>
+                            <select id="filterRouteStatus">
+                                <option value="">Всі</option>
+                                <option value="planned">Заплановані</option>
+                                <option value="active">Активні</option>
+                                <option value="completed">Завершені</option>
+                                <option value="cancelled">Скасовані</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Дата від (початок маршруту)</label>
+                            <input type="date" id="filterStartDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Дата до (початок маршруту)</label>
+                            <input type="date" id="filterEndDate">
+                        </div>
+                    `;
+                    break;
+
+                case 'general':
+                    title = 'Повний звіт';
+                    filterHtml = `
+                        <div class="form-group">
+                            <label>Період звіту</label>
+                            <input type="date" id="generalStartDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Період до</label>
+                            <input type="date" id="generalEndDate">
+                        </div>
+                    `;
+                    break;
+
+                default:
+                    return;
+            }
+
+            document.getElementById('filterContent').innerHTML = `
+                <h3 style="color:#2c3e50; margin-bottom: 15px;">${title}</h3>
+                ${filterHtml}
+                <div class="form-actions">
+                    <button class="btn-apply" onclick="applyFilters('${type}')">
+                        <i class="fas fa-file-pdf"></i> Згенерувати PDF
+                    </button>
+                    <button class="btn-cancel" onclick="closeModal()">Скасувати</button>
+                </div>
+            `;
+
+            document.getElementById('filterModal').classList.add('active');
+        }
+
+        function applyFilters(type) {
+            let url = `${API}/reports/`;
+
+            switch(type) {
+                case 'drivers': {
+                    const status = document.getElementById('filterStatus').value;
+                    url += `drivers${status ? '?status=' + encodeURIComponent(status) : ''}`;
+                    break;
+                }
+
+                case 'vehicles': {
+                    const year = document.getElementById('filterYear').value;
+                    const typeFilter = document.getElementById('filterType').value;
+                    const params = new URLSearchParams();
+                    if (year) params.append('year', year);
+                    if (typeFilter) params.append('type', typeFilter);
+                    url += `vehicles${params.toString() ? '?' + params.toString() : ''}`;
+                    break;
+                }
+
+                case 'routes': {
+                    const status = document.getElementById('filterRouteStatus').value;
+                    const startDate = document.getElementById('filterStartDate').value;
+                    const endDate = document.getElementById('filterEndDate').value;
+                    const params = new URLSearchParams();
+                    if (status) params.append('status', status);
+                    if (startDate) params.append('startDate', startDate);
+                    if (endDate) params.append('endDate', endDate);
+                    url += `routes${params.toString() ? '?' + params.toString() : ''}`;
+                    break;
+                }
+
+                case 'general': {
+                    const startDate = document.getElementById('generalStartDate').value;
+                    const endDate = document.getElementById('generalEndDate').value;
+                    const params = new URLSearchParams();
+                    if (startDate) params.append('startDate', startDate);
+                    if (endDate) params.append('endDate', endDate);
+                    const query = params.toString() ? '?' + params.toString() : '';
+                    
+                    window.open(`${API}/reports/drivers${query}`, '_blank');
+                    window.open(`${API}/reports/vehicles${query}`, '_blank');
+                    window.open(`${API}/reports/routes${query}`, '_blank');
+                    closeModal();
+                    return;
+                }
+
+                default:
+                    return;
+            }
+
+            closeModal();
+            showToast('Генерація PDF...', 'info');
+            window.open(url, '_blank');
+        }
+
+        function closeModal() {
+            document.getElementById('filterModal').classList.remove('active');
+        }
+
+        document.getElementById('filterModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        function showToast(message, type = 'info') {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        }
+
+        // Завантажуємо дані при старті
+        loadReportData();
+        
+        // Оновлюємо дані кожні 30 секунд
+        setInterval(loadReportData, 30000);
+    </script>
+
+</body>
+
+</html>
