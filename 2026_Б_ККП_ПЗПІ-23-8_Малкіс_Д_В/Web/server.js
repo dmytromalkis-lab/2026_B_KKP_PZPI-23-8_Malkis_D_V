@@ -93,7 +93,6 @@ async function startServer() {
             next();
         });
 
-        // ============ AUTH ROUTES ============
         app.post('/api/auth/register', async (req, res) => {
             try {
                 const { email, password, name } = req.body;
@@ -249,7 +248,6 @@ async function startServer() {
             }
         });
 
-        // ============ DRIVERS ROUTES ============
         app.get('/api/drivers', async (req, res) => {
             try {
                 console.log('🔄 Fetching drivers from database...');
@@ -404,7 +402,6 @@ async function startServer() {
             }
         });
 
-        // ============ VEHICLES ROUTES ============
         app.get('/api/vehicles', async (req, res) => {
             try {
                 console.log('🔄 Fetching vehicles from database...');
@@ -611,7 +608,6 @@ async function startServer() {
             }
         });
 
-        // ============ ROUTES ROUTES ============
         app.get('/api/routes', async (req, res) => {
             try {
                 const db = getDB();
@@ -652,7 +648,6 @@ async function startServer() {
             }
         });
 
-        // ============ GET ROUTE BY ID ============
         app.get('/api/routes/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -725,7 +720,6 @@ async function startServer() {
                     });
                 }
 
-                // Перевірка vehicle_id
                 let vehicleIdValue = null;
                 if (vehicle_id !== undefined && vehicle_id !== null && vehicle_id !== '') {
                     vehicleIdValue = parseInt(vehicle_id);
@@ -735,8 +729,7 @@ async function startServer() {
                             error: 'vehicle_id має бути числом'
                         });
                     }
-                    
-                    // Перевіряємо чи існує транспортний засіб
+
                     const db = getDB();
                     const [vehicleCheck] = await db.execute(
                         'SELECT vehicle_id FROM vehicles WHERE vehicle_id = ?',
@@ -754,7 +747,6 @@ async function startServer() {
 
                 const db = getDB();
 
-                // Вставка маршруту з vehicle_id
                 const [result] = await db.execute(
                     `
                     INSERT INTO routes
@@ -780,7 +772,6 @@ async function startServer() {
 
                 console.log(`✅ Маршрут створено з ID: ${result.insertId}, vehicle_id: ${vehicleIdValue}`);
 
-                // Отримуємо створений маршрут з інформацією про транспорт
                 const [newRoute] = await db.execute(`
                     SELECT
                         r.route_id,
@@ -853,7 +844,6 @@ async function startServer() {
             }
         });
 
-        // ============ ПОШУК ШРИФТУ ДЛЯ УКРАЇНСЬКОЇ МОВИ ============
         const fs = require('fs');
         const fontPaths = [
             path.join(__dirname, 'fonts/DejaVuSans.ttf'),
@@ -880,7 +870,6 @@ async function startServer() {
             console.warn('⚠️ Шрифт для кирилиці не знайдено! Українська мова може відображатись неправильно.');
         }
 
-        // ============ ПРЯМІ МАРШРУТИ ДЛЯ ЗВІТІВ ============
         console.log('📊 Створення прямих маршрутів для звітів...');
         const PDFDocument = require('pdfkit');
 
@@ -971,7 +960,6 @@ async function startServer() {
             }
         });
 
-        // Звіт по транспортних засобах
         app.get('/api/reports/vehicles', async (req, res) => {
             try {
                 console.log('📄 Generating vehicles PDF...');
@@ -1054,7 +1042,6 @@ async function startServer() {
             }
         });
 
-        // Звіт по маршрутах
         app.get('/api/reports/routes', async (req, res) => {
             try {
                 console.log('📄 Generating routes PDF...');
@@ -1158,7 +1145,6 @@ async function startServer() {
 
         console.log('✅ Direct report routes created successfully');
 
-        // ============ OTHER ROUTES ============
         app.get('/api/vehicles/list', async (req, res) => {
             try {
                 const db = getDB();
