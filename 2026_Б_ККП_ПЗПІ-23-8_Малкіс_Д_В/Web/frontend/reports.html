@@ -452,7 +452,6 @@
 
             <div class="content-wrapper">
                 <div class="reports-grid" id="reportsGrid">
-                    <!-- Картки звітів будуть створені динамічно -->
                 </div>
             </div>
         </div>
@@ -466,7 +465,6 @@
                 <span class="modal-close" onclick="closeModal()">&times;</span>
             </div>
             <div id="filterContent">
-                <!-- Фільтри будуть вставлені динамічно -->
             </div>
         </div>
     </div>
@@ -480,7 +478,6 @@
             window.location.href = 'login.html';
         }
 
-        // Показуємо ім'я користувача
         document.addEventListener('DOMContentLoaded', () => {
             const userData = localStorage.getItem('user');
             console.log('User data:', userData);
@@ -793,10 +790,8 @@
             window.location.href = 'login.html';
         }
 
-        // Завантажуємо дані при старті
         loadReportData();
-        
-        // Оновлюємо дані кожні 30 секунд
+
         setInterval(loadReportData, 30000);
     </script>
 
